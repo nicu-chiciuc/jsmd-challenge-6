@@ -13,4 +13,5 @@ type alias Circle =
 type CircleIntersection
     = Two ( Point, Point )
     | One Point
+    | Infinite
     | None

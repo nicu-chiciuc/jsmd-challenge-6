@@ -6,6 +6,7 @@ import Svg.Attributes exposing (..)
 import Tuple exposing (..)
 import Data exposing (..)
 import Draw exposing (..)
+import Geometry exposing (..)
 
 
 someCircles : List Circle
@@ -15,11 +16,6 @@ someCircles =
     , { center = ( 50, 60 ), rad = 50 }
     , { center = ( 60, 140 ), rad = 44 }
     ]
-
-
-pointDistance : Point -> Point -> Float
-pointDistance ( x1, y1 ) ( x2, y2 ) =
-    sqrt <| (x2 - x1) ^ 2 + (y2 - y1) ^ 2
 
 
 intersectingCircles : List Circle -> List ( Circle, Circle )
@@ -43,11 +39,6 @@ intersectingCircleCircle c1 c2 =
         Just ( c1, c2 )
     else
         Nothing
-
-
-
---circleIntersection : Circle -> Circle -> CircleIntersection
---circleIntersection c1 c2 =
 
 
 doline : List (Attribute msg) -> ( Circle, Circle ) -> Svg msg
@@ -78,6 +69,17 @@ main =
         centers =
             List.map .center someCircles
 
+        intersec =
+            circleIntersection { center = ( 100, 100 ), rad = 34 } { center = ( 120, 70 ), rad = 15 }
+
+        licst =
+            case intersec of
+                Two (p1, p2) ->
+                    [ p1, p2 ]
+
+                _ ->
+                    []
+
         inters : List ( Circle, Circle )
         inters =
             intersectingCircles someCircles |> Debug.log "fuck"
@@ -90,5 +92,6 @@ main =
             ]
             [ g [] (List.map circleToSvg someCircles)
             , g [] (List.map (customPointSvg [ fill "blue" ]) centers)
+            , g [] (List.map (customPointSvg [ fill "green" ]) licst)
             , g [] (List.map (doline []) inters)
             ]
