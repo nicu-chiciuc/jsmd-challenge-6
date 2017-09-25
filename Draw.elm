@@ -3,18 +3,18 @@ module Draw exposing (..)
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Tuple exposing (..)
-
 import Data exposing (..)
 
-circleToSvg : Circle -> Svg msg
-circleToSvg { center, rad } =
+
+circleToSvg : List (Attribute msg) -> Float -> Circle -> Svg msg
+circleToSvg styles radAdd { center, rad } =
     circle
-        [ cx <| toString <| first <| center
-        , cy <| toString <| second <| center
-        , r <| toString <| rad
-        , fillOpacity "0.2"
-        , fill "red"
-        ]
+        ([ cx <| toString <| first <| center
+         , cy <| toString <| second <| center
+         , r <| toString <| rad + radAdd
+         ]
+            ++ styles
+        )
         []
 
 

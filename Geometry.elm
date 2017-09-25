@@ -69,4 +69,7 @@ circleIntersection c0 c1 =
         y3_2 =
             y2 + h * (x1 - x0) / d
     in
-        Two ( ( x3_1, y3_1 ), ( x3_2, y3_2 ) )
+        if d > (c0.rad + c1.rad) then
+            Nothing
+        else
+            Just ( ( x3_1, y3_1 ), ( x3_2, y3_2 ) )

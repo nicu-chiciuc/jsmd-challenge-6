@@ -1,44 +1,30 @@
 module Main exposing (main)
 
-import Html exposing (Html, text)
+import Html exposing (Html, text, program)
 import Svg exposing (..)
+
+
+-- import Svg.Path exposing ()
+
 import Svg.Attributes exposing (..)
 import Tuple exposing (..)
 import Data exposing (..)
 import Draw exposing (..)
 import Geometry exposing (..)
+import AnimationFrame exposing (..)
+import Time exposing (Time)
 
 
 someCircles : List Circle
-someCircles =
-    [ { center = ( 100, 100 ), rad = 34 }
-    , { center = ( 120, 70 ), rad = 15 }
-    , { center = ( 50, 60 ), rad = 50 }
-    , { center = ( 60, 140 ), rad = 44 }
+someCircles =[
+    -- [ { center = ( 100, 100 ), rad = 34, speed = ( -1, 1 ) }
+    -- , { center = ( 120, 70 ), rad = 15, speed = ( 1, -1 ) }
+     { center = ( 50, 60 ), rad = 50, speed = ( 1, 1 ) }
+    -- , { center = ( 60, 140 ), rad = 44, speed = ( -1, -1 ) }
+    -- , { center = ( 120, 70 ), rad = 15, speed = ( -0.56, -1 ) }
+    -- , { center = ( 50, 60 ), rad = 50, speed = ( 0.4, -2 ) }
+    -- , { center = ( 60, 140 ), rad = 44, speed = ( -1, 1.5 ) }
     ]
-
-
-intersectingCircles : List Circle -> List ( Circle, Circle )
-intersectingCircles circles =
-    case circles of
-        x :: xs ->
-            intersectingCircleToCircles x xs ++ intersectingCircles xs
-
-        _ ->
-            []
-
-
-intersectingCircleToCircles : Circle -> List Circle -> List ( Circle, Circle )
-intersectingCircleToCircles circ list =
-    List.filterMap (intersectingCircleCircle circ) list
-
-
-intersectingCircleCircle : Circle -> Circle -> Maybe ( Circle, Circle )
-intersectingCircleCircle c1 c2 =
-    if pointDistance c1.center c2.center <= c1.rad + c2.rad then
-        Just ( c1, c2 )
-    else
-        Nothing
 
 
 doline : List (Attribute msg) -> ( Circle, Circle ) -> Svg msg
@@ -63,35 +49,164 @@ doline styles ( c1, c2 ) =
             []
 
 
-main : Html msg
+type alias Model =
+    { circles : List Circle
+    , tmpCircles : List Circle
+    , svgHeight : Float
+    , svgWidth : Float
+    }
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( { circles = someCircles
+      , tmpCircles = []
+      , svgHeight = 200
+      , svgWidth = 200
+      }
+    , Cmd.none
+    )
+
+
+
+-- MESSAGES
+
+
+type Msg
+    = Something Time
+
+
+main : Program Never Model Msg
 main =
+    program
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ diffs Something
+        ]
+
+
+circleUpdate : Float -> Float -> Float -> Circle -> Circle
+circleUpdate sWidth sHeight ms cir =
     let
+        ( cx, cy ) =
+            cir.center
+
+        ( sx, sy ) =
+            cir.speed
+
+        nx =
+            cx + ((sx *5 ) / ms)
+
+        ny =
+            cy + ((sy *5 ) / ms)
+
+        nnx =
+            if nx < 0 then
+                nx + sWidth
+            else if nx > sWidth then
+                nx - sWidth
+            else
+                nx
+        
+        nny =
+            if ny < 0 then
+                ny + sHeight
+            else if ny > sHeight then
+                ny - sHeight
+            else
+                ny
+    in
+        { cir | center = ( nnx, nny ) }
+
+
+getTmpCircles : Model -> List Circle
+getTmpCircles model =
+    let
+        { circles, svgHeight, svgWidth } =
+            model
+
+        isAtMargin : Circle -> Maybe Circle
+        isAtMargin circ =
+            let
+                ( cx, cy ) =
+                    circ.center
+
+                rad =
+                    circ.rad
+
+                nx =
+                    if (cx - rad) < 0 then
+                        cx + svgWidth
+                    else if (svgWidth - cx - rad) < 0 then
+                        cx - svgWidth
+                    else
+                        cx
+
+                ny =
+                    if (cy - rad) < 0 then
+                        cy + svgHeight
+                    else if (svgHeight - cy - rad) < 0 then
+                        cy - svgHeight
+                    else
+                        cy
+            in
+                if (cx == nx) && (cy == ny) then
+                    Nothing
+                else
+                    Just { circ | center = ( nx, ny ) }
+
+        atMargin =
+            List.filterMap isAtMargin circles
+    in
+        atMargin
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Something num ->
+            let
+                newc =
+                    List.map (circleUpdate model.svgWidth model.svgHeight num) model.circles
+
+                tmp =
+                    getTmpCircles { model | circles = newc }
+            in
+                ( { model | circles = newc, tmpCircles = tmp }, Cmd.none )
+
+
+view : Model -> Html msg
+view model =
+    let
+        circles =
+            model.circles
+
         centers =
-            List.map .center someCircles
+            List.map .center circles
 
-        intersec =
-            circleIntersection { center = ( 100, 100 ), rad = 34 } { center = ( 120, 70 ), rad = 15 }
-
-        licst =
-            case intersec of
-                Two (p1, p2) ->
-                    [ p1, p2 ]
-
-                _ ->
-                    []
-
-        inters : List ( Circle, Circle )
-        inters =
-            intersectingCircles someCircles |> Debug.log "fuck"
+        tmpCircles =
+            model.tmpCircles |> Debug.log "tmp"
     in
         svg
             [ version "1.1"
             , x "0"
             , y "0"
-            , viewBox "0 0 323.141 322.95"
+            , height <| toString <| model.svgHeight
+            , width <| toString <| model.svgWidth
+            , viewBox <| "0 0" ++ (toString model.svgWidth) ++ (toString model.svgHeight)
             ]
-            [ g [] (List.map circleToSvg someCircles)
-            , g [] (List.map (customPointSvg [ fill "blue" ]) centers)
-            , g [] (List.map (customPointSvg [ fill "green" ]) licst)
-            , g [] (List.map (doline []) inters)
+            [ g [] (List.map (circleToSvg [ fill "black" ] 0) circles)
+            , g [] (List.map (circleToSvg [ fill "black" ] 0) model.tmpCircles)
+            
+            , g [] (List.map (circleToSvg [ fill "white" ] -2) circles)
+            , g [] (List.map (circleToSvg [ fill "white" ] -2) model.tmpCircles)
+            
             ]
