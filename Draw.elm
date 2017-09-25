@@ -8,10 +8,14 @@ import Data exposing (..)
 
 circleToSvg : List (Attribute msg) -> Float -> Circle -> Svg msg
 circleToSvg styles radAdd { center, rad } =
+    let 
+        nrad = rad + radAdd
+        nnrad = if nrad < 0 then 0 else nrad
+    in
     circle
         ([ cx <| toString <| first <| center
          , cy <| toString <| second <| center
-         , r <| toString <| rad + radAdd
+         , r <| toString <|  nnrad
          ]
             ++ styles
         )

@@ -16,14 +16,14 @@ import Time exposing (Time)
 
 
 someCircles : List Circle
-someCircles =[
-    -- [ { center = ( 100, 100 ), rad = 34, speed = ( -1, 1 ) }
-    -- , { center = ( 120, 70 ), rad = 15, speed = ( 1, -1 ) }
-     { center = ( 50, 60 ), rad = 50, speed = ( 1, 1 ) }
-    -- , { center = ( 60, 140 ), rad = 44, speed = ( -1, -1 ) }
-    -- , { center = ( 120, 70 ), rad = 15, speed = ( -0.56, -1 ) }
-    -- , { center = ( 50, 60 ), rad = 50, speed = ( 0.4, -2 ) }
-    -- , { center = ( 60, 140 ), rad = 44, speed = ( -1, 1.5 ) }
+someCircles =
+    [ { center = ( 100, 100 ), rad = 44, speed = ( -2, -2 ) } 
+    , { center = ( 100, 70 ), rad = 27, speed = ( 1, -1 ) }
+    , { center = ( 50, 60 ), rad = 50, speed = ( 1, 1 ) }
+    , { center = ( 100, 100 ), rad = 34, speed = ( -1, 1 ) }
+    , { center = ( 120, 70 ), rad = 20, speed = ( -0.56, -1 ) }
+    , { center = ( 50, 60 ), rad = 50, speed = ( 0.4, -2 ) }
+    , { center = ( 60, 140 ), rad = 44, speed = ( -1, 1.5 ) }
     ]
 
 
@@ -61,8 +61,8 @@ init : ( Model, Cmd Msg )
 init =
     ( { circles = someCircles
       , tmpCircles = []
-      , svgHeight = 200
-      , svgWidth = 200
+      , svgHeight = 300
+      , svgWidth = 300
       }
     , Cmd.none
     )
@@ -133,7 +133,7 @@ getTmpCircles model =
         { circles, svgHeight, svgWidth } =
             model
 
-        isAtMargin : Circle -> Maybe Circle
+        isAtMargin : Circle -> List Circle
         isAtMargin circ =
             let
                 ( cx, cy ) =
@@ -157,16 +157,21 @@ getTmpCircles model =
                         cy - svgHeight
                     else
                         cy
-            in
-                if (cx == nx) && (cy == ny) then
-                    Nothing
-                else
-                    Just { circ | center = ( nx, ny ) }
 
-        atMargin =
-            List.filterMap isAtMargin circles
+                theOther : List (Maybe Circle)
+                theOther = [
+                    if (nx /= cx) then Just {circ | center = (nx, cy)} else Nothing,
+                    if (ny /= cy) then Just {circ | center = (cx, ny)} else Nothing,
+                    if (nx /= cx && ny /= cy) then Just {circ | center = (nx, ny)} else Nothing
+                ]
+            in
+                List.filterMap identity theOther
+
+        listOfCircles : List (List Circle)
+        listOfCircles = List.map isAtMargin circles
+        
     in
-        atMargin
+        List.concat listOfCircles
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -186,14 +191,10 @@ update msg model =
 view : Model -> Html msg
 view model =
     let
-        circles =
-            model.circles
-
         centers =
-            List.map .center circles
+            List.map .center model.circles
 
-        tmpCircles =
-            model.tmpCircles |> Debug.log "tmp"
+        allCircles = model.circles ++ model.tmpCircles
     in
         svg
             [ version "1.1"
@@ -201,12 +202,13 @@ view model =
             , y "0"
             , height <| toString <| model.svgHeight
             , width <| toString <| model.svgWidth
-            , viewBox <| "0 0" ++ (toString model.svgWidth) ++ (toString model.svgHeight)
+            , viewBox <| "0 0 " ++ (toString model.svgWidth) ++ " " ++ (toString model.svgHeight)
             ]
-            [ g [] (List.map (circleToSvg [ fill "black" ] 0) circles)
-            , g [] (List.map (circleToSvg [ fill "black" ] 0) model.tmpCircles)
-            
-            , g [] (List.map (circleToSvg [ fill "white" ] -2) circles)
-            , g [] (List.map (circleToSvg [ fill "white" ] -2) model.tmpCircles)
+            [ g [] (List.map (circleToSvg [ fill "black" ] 0) allCircles)
+            , g [] (List.map (circleToSvg [ fill "red" ] -6) allCircles)
+            , g [] (List.map (circleToSvg [ fill "green" ] -12) allCircles)
+            , g [] (List.map (circleToSvg [ fill "blue" ] -18) allCircles)
+            , g [] (List.map (circleToSvg [ fill "yellow" ] -24) allCircles)
+            , g [] (List.map (circleToSvg [ fill "white" ] -30) allCircles)
             
             ]
