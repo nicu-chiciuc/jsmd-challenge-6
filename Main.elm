@@ -205,10 +205,10 @@ view model =
             , viewBox <| "0 0 " ++ (toString model.svgWidth) ++ " " ++ (toString model.svgHeight)
             ]
             [ g [] (List.map (circleToSvg [ fill "black" ] 0) allCircles)
-            , g [] (List.map (circleToSvg [ fill "red" ] -6) allCircles)
-            , g [] (List.map (circleToSvg [ fill "green" ] -12) allCircles)
-            , g [] (List.map (circleToSvg [ fill "blue" ] -18) allCircles)
-            , g [] (List.map (circleToSvg [ fill "yellow" ] -24) allCircles)
-            , g [] (List.map (circleToSvg [ fill "white" ] -30) allCircles)
+            -- , g [] (List.map (circleToSvg [ fill "red" ] -6) allCircles)
+            -- , g [] (List.map (circleToSvg [ fill "green" ] -12) allCircles)
+            -- , g [] (List.map (circleToSvg [ fill "blue" ] -18) allCircles)
+            -- , g [] (List.map (circleToSvg [ fill "yellow" ] -24) allCircles)
+            , g [] (List.map (circleToSvg [ fill "white" ] -10) allCircles)
             
             ]
